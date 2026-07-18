@@ -1,0 +1,10 @@
+.env
+
+data/
+logs/
+postgres_data/
+sonarqube_data/
+jenkins_data/
+
+.DS_Store
+Thumbs.db
