@@ -49,7 +49,7 @@ services:
     restart: unless-stopped
     user: root
     environment:
-      - JAVA_OPTS="-Xmx1024m -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true"
+      - JAVA_OPTS=-Xmx1024m -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
