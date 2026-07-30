@@ -1,10 +1,15 @@
 .env
+.env.production
+.env.staging
+.env.*
 
-data/
-logs/
-postgres_data/
-sonarqube_data/
-jenkins_data/
+!.env.example
+
+*/postgres_data/
+*/sonarqube_data/
+*/sonarqube_extensions/
+*/sonarqube_logs/
+*/jenkins_data/
 
 .DS_Store
 Thumbs.db

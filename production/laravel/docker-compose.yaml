@@ -1,0 +1,104 @@
+services:
+  nginx:
+    container_name: laravel-web-server-prod
+    image: ${REGISTRY_URL}/nginx:latest
+    restart: unless-stopped
+    volumes:
+      - laravel-storage-production:/var/www/storage:ro
+      - laravel-public-assets:/var/www/public/build:ro
+    networks:
+      - laravel-network-production
+    ports:
+      - "80:80"
+    depends_on:
+      php-fpm:
+        condition: service_healthy
+
+  php-fpm:
+    container_name: laravel-app-prod
+    image: ${REGISTRY_URL}/fpm:latest
+    restart: unless-stopped
+    volumes:
+      - laravel-public-assets:/var/www/public/build
+      - laravel-storage-production:/var/www/storage
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - TZ=Asia/Jakarta
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - laravel-network-production
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
+      start_period: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  queue:
+    container_name: laravel-queue-worker-prod
+    image: ${REGISTRY_URL}/fpm:latest
+    environment:
+      - TZ=Asia/Jakarta  
+    command: ["php", "artisan", "queue:work", "--tries=3"]
+    restart: unless-stopped
+    depends_on:
+      php-fpm:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - laravel-network-production
+
+  scheduler:
+    container_name: laravel-scheduler-prod
+    image: ${REGISTRY_URL}/fpm:latest
+    environment:
+      - TZ=Asia/Jakarta
+    command: ["php", "artisan", "schedule:work"]
+    restart: unless-stopped
+    depends_on:
+      php-fpm:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - laravel-network-production
+
+  mysql:
+    container_name: laravel-mysql-prod
+    image: mysql:lts
+    restart: always
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - TZ=Asia/Jakarta
+    volumes:
+      - mysql-data-production:/var/lib/mysql
+    networks:
+      - laravel-network-production
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+networks:
+  laravel-network-production:
+    name: laravel-network-production
+
+volumes:
+  mysql-data-production:
+    name: mysql-data-production
+  laravel-storage-production:
+    name: laravel-storage-production
+  laravel-public-assets:
+    name: laravel-public-assets

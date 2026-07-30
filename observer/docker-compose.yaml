@@ -1,13 +1,13 @@
 services:
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: cloudflared_tunnel
+    container_name: observer_tunnel
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN_CD}
     networks:
-      - ci_network
+      - observer_network
 
   postgres:
     image: postgres:15
@@ -20,7 +20,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - ci_network
+      - observer_network
 
   sonarqube:
     image: sonarqube:10.4-community
@@ -37,32 +37,14 @@ services:
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
     networks:
-      - ci_network
+      - observer_network
     deploy:
       resources:
         limits:
           memory: 3G
 
-  jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins
-    restart: unless-stopped
-    user: root
-    environment:
-      - JAVA_OPTS=-Xmx1024m -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true
-    volumes:
-      - jenkins_data:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker
-    networks:
-      - ci_network
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-
 networks:
-  ci_network:
+  observer_network:
     driver: bridge
 
 volumes:
@@ -70,4 +52,3 @@ volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
-  jenkins_data:

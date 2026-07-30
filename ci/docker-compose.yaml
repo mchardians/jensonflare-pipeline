@@ -1,0 +1,35 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: ci_tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN_CI}
+    networks:
+      - ci_network
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    user: root
+    environment:
+      - JAVA_OPTS=-Xmx1024m -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+    networks:
+      - ci_network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+networks:
+  ci_network:
+    driver: bridge
+
+volumes:
+  jenkins_data:
