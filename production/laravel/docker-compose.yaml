@@ -1,4 +1,14 @@
 services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: laravel-tunnel-prod
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN_PROD}
+    networks:
+      - laravel-network-production
+
   nginx:
     container_name: laravel-web-server-prod
     image: ${REGISTRY_URL}/nginx:latest
@@ -8,8 +18,6 @@ services:
       - laravel-public-assets:/var/www/public/build:ro
     networks:
       - laravel-network-production
-    ports:
-      - "80:80"
     depends_on:
       php-fpm:
         condition: service_healthy
