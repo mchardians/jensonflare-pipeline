@@ -1,42 +1,59 @@
-ifndef PROJECT
-$(error WARNING: PROJECT argument can't be empty! Use Format: make <target> PROJECT=<nama_folder>)
-endif
-
-ifndef APP
-$(error WARNING: APP argument can't be empty! Use Format: make <target> APP=<app_container>)
-endif
-
 .PHONY: up down restart logs ps clean shell-app pull
 
+define require-project
+	@if [ -z "$(PROJECT)" ]; then \
+		echo "ERROR: PROJECT argument can't be empty!"; \
+		echo "Usage: make <target> PROJECT=<project_folder>"; \
+		exit 1; \
+	fi
+endef
+
+define require-app
+	@if [ -z "$(APP)" ]; then \
+		echo "ERROR: APP argument can't be empty!"; \
+		echo "Usage: make shell-app PROJECT=<project_folder> APP=<container_name>"; \
+		exit 1; \
+	fi
+endef
+
 up:
+	$(require-project)
 	@echo "Running service for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose up -d
+	@cd $(PROJECT) && docker compose up -d
 
 down:
+	$(require-project)
 	@echo "Stopping service for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose down
+	@cd $(PROJECT) && docker compose down
 
 restart:
+	$(require-project)
 	@echo "Restarting service for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose restart
+	@cd $(PROJECT) && docker compose restart
 
 pull:
+	$(require-project)
 	@echo "Pulling latest image for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose pull
-	cd $(PROJECT) && docker compose up -d
+	@cd $(PROJECT) && docker compose pull
+	@cd $(PROJECT) && docker compose up -d
 
 logs:
-	@echo "Showing log for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose logs -f
+	$(require-project)
+	@echo "Showing logs for the $(PROJECT) project..."
+	@cd $(PROJECT) && docker compose logs -f
 
 ps:
-@echo "Showing container status for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose ps
+	$(require-project)
+	@echo "Showing container status for the $(PROJECT) project..."
+	@cd $(PROJECT) && docker compose ps
 
 clean:
-	@echo "Warning: Take down service and clean volumes for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose down -v
+	$(require-project)
+	@echo "Warning: Stopping services and removing volumes for the $(PROJECT) project..."
+	@cd $(PROJECT) && docker compose down -v
 
 shell-app:
-	@echo "Enter app terminal for the $(PROJECT) project..."
-	cd $(PROJECT) && docker compose exec $(APP) bash
+	$(require-project)
+	$(require-app)
+	@echo "Entering $(APP) container..."
+	@cd $(PROJECT) && docker compose exec $(APP) bash
