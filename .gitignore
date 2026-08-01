@@ -3,7 +3,7 @@
 .env.staging
 .env.*
 
-!.env.example
+!.env.*.example
 
 */postgres_data/
 */sonarqube_data/
