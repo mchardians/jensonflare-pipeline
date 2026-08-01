@@ -32,10 +32,13 @@ services:
       - SONAR_JDBC_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SONAR_JDBC_USERNAME=${POSTGRES_USER}
       - SONAR_JDBC_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=Asia/Jakarta
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - observer_network
     deploy:
