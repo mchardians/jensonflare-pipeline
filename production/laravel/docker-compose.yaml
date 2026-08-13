@@ -1,44 +1,46 @@
 services:
   cloudflared:
+    container_name: ${PROJECT_NAME}_tunnel
     image: cloudflare/cloudflared:latest
-    container_name: laravel-tunnel-prod
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN_PROD}
     networks:
-      - laravel-network-production
+      - app-network
 
   nginx:
-    container_name: laravel-web-server-prod
-    image: ${REGISTRY_URL}/nginx:latest
+    container_name: ${PROJECT_NAME}_webserver
+    image: ${IMAGE_REGISTRY_PREFIX}-nginx:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-8000}:80"
     volumes:
-      - laravel-storage-production:/var/www/storage:ro
-      - laravel-public-assets:/var/www/public/build:ro
+      - app-storage:/var/www/storage:ro
+      - app-build:/var/www/public/build:ro
     networks:
-      - laravel-network-production
+      - app-network
     depends_on:
       php-fpm:
         condition: service_healthy
 
   php-fpm:
-    container_name: laravel-app-prod
-    image: ${REGISTRY_URL}/fpm:latest
+    container_name: ${PROJECT_NAME}_app
+    image: ${IMAGE_REGISTRY_PREFIX}-php-fpm:${IMAGE_TAG:-latest}
     restart: unless-stopped
     volumes:
-      - laravel-public-assets:/var/www/public/build
-      - laravel-storage-production:/var/www/storage
+      - app-storage:/var/www/storage
+      - app-build:/var/www/public/build
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - TZ=Asia/Jakarta
+      - TZ=${TZ:-Asia/Jakarta}
     deploy:
       resources:
         limits:
           memory: 512M
     networks:
-      - laravel-network-production
+      - app-network
     healthcheck:
       test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
       start_period: 30s
@@ -49,11 +51,26 @@ services:
       mysql:
         condition: service_healthy
 
-  queue:
-    container_name: laravel-queue-worker-prod
-    image: ${REGISTRY_URL}/fpm:latest
+  php-cli:
+    container_name: ${PROJECT_NAME}_workspace
+    image: ${IMAGE_REGISTRY_PREFIX}-php-cli:${IMAGE_TAG:-latest}
+    profiles:
+      - workspace
+    tty: true
+    stdin_open: true
     environment:
-      - TZ=Asia/Jakarta  
+      - TZ=${TZ:-Asia/Jakarta}
+    networks:
+      - app-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  queue:
+    container_name: ${PROJECT_NAME}_queue
+    image: ${IMAGE_REGISTRY_PREFIX}-php-cli:${IMAGE_TAG:-latest}
+    environment:
+      - TZ=${TZ:-Asia/Jakarta}
     command: ["php", "artisan", "queue:work", "--tries=3"]
     restart: unless-stopped
     depends_on:
@@ -62,13 +79,13 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - laravel-network-production
+      - app-network
 
   scheduler:
-    container_name: laravel-scheduler-prod
-    image: ${REGISTRY_URL}/fpm:latest
+    container_name: ${PROJECT_NAME}_scheduler
+    image: ${IMAGE_REGISTRY_PREFIX}-php-cli:${IMAGE_TAG:-latest}
     environment:
-      - TZ=Asia/Jakarta
+      - TZ=${TZ:-Asia/Jakarta}
     command: ["php", "artisan", "schedule:work"]
     restart: unless-stopped
     depends_on:
@@ -77,10 +94,10 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - laravel-network-production
+      - app-network
 
   mysql:
-    container_name: laravel-mysql-prod
+    container_name: ${PROJECT_NAME}_db
     image: mysql:lts
     restart: always
     environment:
@@ -88,11 +105,11 @@ services:
       - MYSQL_USER=${DB_USERNAME}
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - TZ=Asia/Jakarta
+      - TZ=${TZ:-Asia/Jakarta}
     volumes:
-      - mysql-data-production:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
     networks:
-      - laravel-network-production
+      - app-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
       interval: 15s
@@ -100,13 +117,13 @@ services:
       retries: 5
 
 networks:
-  laravel-network-production:
-    name: laravel-network-production
+  app-network:
+    name: ${PROJECT_NAME}-network
 
 volumes:
-  mysql-data-production:
-    name: mysql-data-production
-  laravel-storage-production:
-    name: laravel-storage-production
-  laravel-public-assets:
-    name: laravel-public-assets
+  mysql-data:
+    name: ${PROJECT_NAME}-mysql-data
+  app-storage:
+    name: ${PROJECT_NAME}-storage
+  app-build:
+    name: ${PROJECT_NAME}-public-assets

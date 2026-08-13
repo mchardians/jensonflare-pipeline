@@ -1,17 +1,17 @@
 services:
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: observer_tunnel
+    container_name: observer_cloudflare_tunnel
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN_CD}
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN_OBSERVER}
     networks:
       - observer_network
 
   postgres:
     image: postgres:15
-    container_name: sonarqube_db
+    container_name: observer_postgresql
     restart: unless-stopped
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -24,7 +24,7 @@ services:
 
   sonarqube:
     image: sonarqube:10.4-community
-    container_name: sonarqube
+    container_name: observer_sonarqube
     restart: unless-stopped
     depends_on:
       - postgres
@@ -48,10 +48,15 @@ services:
 
 networks:
   observer_network:
+    name: observer_network
     driver: bridge
 
 volumes:
   postgres_data:
+    name: postgres_data
   sonarqube_data:
+    name: sonarqube_data
   sonarqube_extensions:
+    name: sonarqube_extensions
   sonarqube_logs:
+    name: sonarqube_logs

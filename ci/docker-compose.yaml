@@ -1,7 +1,7 @@
 services:
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: ci_tunnel
+    container_name: ci_cloudflare_tunnel
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
@@ -11,7 +11,7 @@ services:
 
   jenkins:
     image: jenkins/jenkins:lts
-    container_name: jenkins
+    container_name: ci_jenkins
     restart: unless-stopped
     user: root
     environment:
@@ -32,6 +32,7 @@ services:
 
 networks:
   ci_network:
+    name: ci_network
     driver: bridge
 
 volumes:
