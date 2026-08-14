@@ -27,14 +27,16 @@ services:
   php-fpm:
     container_name: ${PROJECT_NAME}_app
     image: ${IMAGE_REGISTRY_PREFIX}-php-fpm:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    volumes:
-      - app-storage:/var/www/storage
-      - app-build:/var/www/public/build
+    env_file:
+      - .env
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
       - TZ=${TZ:-Asia/Jakarta}
+    restart: unless-stopped
+    volumes:
+      - app-storage:/var/www/storage
+      - app-build:/var/www/public/build
     deploy:
       resources:
         limits:
@@ -58,6 +60,8 @@ services:
       - workspace
     tty: true
     stdin_open: true
+    env_file:
+      - .env
     environment:
       - TZ=${TZ:-Asia/Jakarta}
     networks:
@@ -69,6 +73,8 @@ services:
   queue:
     container_name: ${PROJECT_NAME}_queue
     image: ${IMAGE_REGISTRY_PREFIX}-php-cli:${IMAGE_TAG:-latest}
+    env_file:
+      - .env
     environment:
       - TZ=${TZ:-Asia/Jakarta}
     command: ["php", "artisan", "queue:work", "--tries=3"]
@@ -84,6 +90,8 @@ services:
   scheduler:
     container_name: ${PROJECT_NAME}_scheduler
     image: ${IMAGE_REGISTRY_PREFIX}-php-cli:${IMAGE_TAG:-latest}
+    env_file:
+      - .env
     environment:
       - TZ=${TZ:-Asia/Jakarta}
     command: ["php", "artisan", "schedule:work"]
@@ -99,13 +107,15 @@ services:
   mysql:
     container_name: ${PROJECT_NAME}_db
     image: mysql:lts
-    restart: always
+    env_file:
+      - .env
     environment:
       - MYSQL_DATABASE=${DB_DATABASE}
       - MYSQL_USER=${DB_USERNAME}
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - TZ=${TZ:-Asia/Jakarta}
+    restart: always
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
