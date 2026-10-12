@@ -3,7 +3,7 @@
   "bakeTarget": "ci",
   "imageServices": ["nginx", "php-fpm", "php-cli"],
   "pullServices": ["nginx", "php-fpm", "queue"],
-  "trivyServices": ["php-fpm"],
+  "securityServices": ["php-fpm"],
   "dependencyServices": ["mysql"],
   "migrateService": "php-cli",
   "migrateCmd": "php artisan migrate --force",

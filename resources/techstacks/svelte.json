@@ -3,7 +3,7 @@
   "bakeTarget": "ci",
   "imageServices": ["nginx"],
   "pullServices": ["nginx"],
-  "trivyServices": ["nginx"],
+  "securityServices": ["nginx"],
   "dependencyServices": [],
   "migrateService": "",
   "migrateCmd": "",
