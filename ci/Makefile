@@ -1,4 +1,4 @@
-.PHONY: up down restart logs ps clean shell-jenkins shell-sonar pull
+.PHONY: up down restart logs ps clean shell-jenkins pull
 
 up:
 	docker compose up -d
@@ -23,7 +23,4 @@ clean:
 	docker compose down -v
 
 shell-jenkins:
-	docker exec -it jenkins bash
-
-shell-sonar:
-	docker exec -it sonarqube bash
+	docker exec -it ci_jenkins bash

@@ -1,0 +1,29 @@
+services:
+  cloudflared:
+    container_name: ${PROJECT_NAME}_tunnel
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN_PROD}
+    networks:
+      - app-network
+
+  nginx:
+    container_name: ${PROJECT_NAME}_webserver
+    image: ${IMAGE_REGISTRY_PREFIX}-nginx:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-Asia/Jakarta}
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      start_period: 10s
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app-network:
+    name: ${PROJECT_NAME}-network

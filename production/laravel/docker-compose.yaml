@@ -17,9 +17,14 @@ services:
       - "${NGINX_PORT:-8000}:80"
     volumes:
       - app-storage:/var/www/storage:ro
-      - app-build:/var/www/public/build:ro
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/up || exit 1"]
+      start_period: 15s
+      interval: 15s
+      timeout: 5s
+      retries: 5
     depends_on:
       php-fpm:
         condition: service_healthy
@@ -36,7 +41,6 @@ services:
     restart: unless-stopped
     volumes:
       - app-storage:/var/www/storage
-      - app-build:/var/www/public/build
     deploy:
       resources:
         limits:
@@ -79,6 +83,7 @@ services:
       - TZ=${TZ:-Asia/Jakarta}
     command: ["php", "artisan", "queue:work", "--tries=3"]
     restart: unless-stopped
+    stop_grace_period: 60s
     depends_on:
       php-fpm:
         condition: service_healthy
@@ -135,5 +140,3 @@ volumes:
     name: ${PROJECT_NAME}-mysql-data
   app-storage:
     name: ${PROJECT_NAME}-storage
-  app-build:
-    name: ${PROJECT_NAME}-public-assets

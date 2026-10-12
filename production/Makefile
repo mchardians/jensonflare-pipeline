@@ -17,10 +17,15 @@ define require-app
 endef
 
 define COMPOSE_CMD
-	if [ -f "docker-compose.override.yaml" ]; then \
-		CMD="docker compose -f compose.base.yaml -f docker-compose.override.yaml"; \
+	if [ -f ".release.env" ]; then \
+		ENVF="--env-file .env --env-file .release.env"; \
 	else \
-		CMD="docker compose -f compose.base.yaml"; \
+		ENVF="--env-file .env"; \
+	fi && \
+	if [ -f "docker-compose.override.yaml" ]; then \
+		CMD="docker compose $$ENVF -f compose.base.yaml -f docker-compose.override.yaml"; \
+	else \
+		CMD="docker compose $$ENVF -f compose.base.yaml"; \
 	fi
 endef
 

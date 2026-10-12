@@ -1,0 +1,12 @@
+{
+  "bakeResource": "bake/svelte.hcl",
+  "bakeTarget": "ci",
+  "imageServices": ["nginx"],
+  "pullServices": ["nginx"],
+  "trivyServices": ["nginx"],
+  "dependencyServices": [],
+  "migrateService": "",
+  "migrateCmd": "",
+  "backupService": "",
+  "test": null
+}
