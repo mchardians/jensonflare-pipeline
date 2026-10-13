@@ -68,13 +68,13 @@ def call(Map args = [:]) {
                     script {
                         deploymentStatus(cfg, 'pending', 'Pipeline started')
 
-                        sh(label: 'Preflight', script: '''
+                        sh(label: 'Preflight: check the Docker daemon and the buildx plugin', script: '''
                             docker version --format '{{.Server.Version}}' >/dev/null
                             docker buildx version >/dev/null || {
                                 echo "docker buildx is not available in Jenkins (mount the cli-plugins directory, see ci/docker-compose.yaml)"; exit 1; }
                         ''')
 
-                        def semanticVersion = sh(script: 'cat VERSION 2>/dev/null || echo 1.0.0', returnStdout: true).trim()
+                        def semanticVersion = sh(label: 'Read the semantic version from the VERSION file (default 1.0.0)', script: 'cat VERSION 2>/dev/null || echo 1.0.0', returnStdout: true).trim()
                         def commitSha = (env.GIT_COMMIT ?: 'nogit').take(7)
                         env.IMAGE_TAG = "v${semanticVersion}-${env.BUILD_NUMBER}-${commitSha}"
                         echo "Image tag: ${env.IMAGE_TAG}"
@@ -88,6 +88,7 @@ def call(Map args = [:]) {
                         def bakeFile = cfg.bakeFile
                         if (!bakeFile) {
                             bakeFile = "${pwd(tmp: true)}/${cfg.techStack}.hcl"
+                            echo "Bake definition: ${cfg.bakeResource} (from the pipeline library)"
                             writeFile file: bakeFile, text: libraryResource(cfg.bakeResource)
                         }
                         withEnv(["BAKE_FILE=${bakeFile}", "BAKE_TARGET=${cfg.bakeTarget}", "IMAGE=${cfg.image}", "TAG=${env.IMAGE_TAG}"]) {

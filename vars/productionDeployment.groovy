@@ -1,18 +1,19 @@
 def call(Map cfg) {
     def bundleDir = "${pwd(tmp: true)}/deploy-bundle"
-    sh "rm -rf '${bundleDir}' && mkdir -p '${bundleDir}'"
+    sh(label: 'Prepare empty deploy bundle directory', script: "rm -rf '${bundleDir}' && mkdir -p '${bundleDir}'")
 
+    echo 'Deploy bundle: adding deploy.sh and prune-images.sh from the pipeline library'
     writeFile file: "${bundleDir}/deploy.sh", text: libraryResource('scripts/deploy.sh')
     writeFile file: "${bundleDir}/prune-images.sh", text: libraryResource('scripts/prune-images.sh')
 
     def hasProjectCompose = fileExists('docker/production/docker-compose.yaml')
 
     if (hasProjectCompose) {
-        sh "cp docker/production/docker-compose.yaml '${bundleDir}/compose.base.yaml'"
+        sh(label: 'Deploy bundle: use the compose file from the project', script: "cp docker/production/docker-compose.yaml '${bundleDir}/compose.base.yaml'")
     }
 
     if (fileExists('docker-compose.override.yaml')) {
-        sh "cp docker-compose.override.yaml '${bundleDir}/docker-compose.override.yaml'"
+        sh(label: 'Deploy bundle: add the project compose override file', script: "cp docker-compose.override.yaml '${bundleDir}/docker-compose.override.yaml'")
     }
 
     def deployParams = [
@@ -46,6 +47,7 @@ def call(Map cfg) {
         paramsContent += "${param.key}='${param.value}'\n" 
     }
 
+    echo 'Deploy bundle: writing deploy.params (non-secret settings only)'
     writeFile file: "${bundleDir}/deploy.params", text: paramsContent
 
     withCredentials([
