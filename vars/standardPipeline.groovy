@@ -93,7 +93,7 @@ def call(Map args = [:]) {
                         }
                         withEnv(["BAKE_FILE=${bakeFile}", "BAKE_TARGET=${cfg.bakeTarget}", "IMAGE=${cfg.image}", "TAG=${env.IMAGE_TAG}"]) {
                             sh(label: "buildx bake: ${cfg.imageServices.join(', ')} (parallel, shared cache)",
-                               script: 'docker buildx bake -f "$BAKE_FILE" --load --provenance=false --progress=plain "$BAKE_TARGET"')
+                               script: 'docker buildx bake -f "$BAKE_FILE" --load --provenance=false --pull --progress=plain "$BAKE_TARGET"')
                         }
                     }
                 }
